@@ -9,6 +9,8 @@ clock = pygame.time.Clock()
 walkRight = [pygame.image.load('Pygame_Final/Samurai/Samurai_r1.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r2.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r3.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r4.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r5.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r6.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r7.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r8.png')]
 walkLeft = [pygame.image.load('Pygame_Final/Samurai/Samurai_r1.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r2.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r3.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r4.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r5.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r6.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r7.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_r8.png')]
 Jump = [pygame.image.load('Pygame_Final/Samurai/Samurai_jump1.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump2.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump3.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump4.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump5.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump6.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump7.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_jump8.png')]
+Attack = [pygame.image.load('Pygame_Final/Samurai/Samurai_attack1.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack2.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack3.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack4.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack5.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack6.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack7.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack8.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_attack9.png')]
+ultraAttack = [pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack1.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack2.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack3.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack4.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack5.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack6.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack7.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack8.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack9.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack10.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack11.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack12.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack13.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack14.png'),pygame.image.load('Pygame_Final/Samurai/Samurai_ultraAttack15.png')]
 
 
 ##################### Класс для создания параллакса #######################
@@ -61,31 +63,49 @@ class player(object):
         self.isJump = False # Пока вверх не нажат прыжок ложное значение
         self.jumpCount = 10 # Насколько вверх мы прыгаем
         self.attack = False # загрузка анимации атаки
+        self.attackCount = 0  
+        self.ultraAttack = False # загрузка анимации ультра
+        self.ultraAttackCount = 0  
         self.left = False # загрузка анимации влево
         self.right = False # загрузка анимации вправо
         self.walkCount = 0 # счётчик движения
         self.standing = True # загрузка анимации стояния
 
     def draw(self,screen):
-        if self.walkCount + 1 >= 24: # 8 типов движения влево/вправо * 3 фрейма = 24
-            self.walkCount = 0 
+        if self.walkCount + 1 >= 24:
+            self.walkCount = 0
+        if self.attackCount + 1 >= 27:
+            self.attackCount = 0
+            self.attack = False
+        if self.ultraAttackCount + 1 >= 45:
+            self.ultraAttackCount = 0
+            self.ultraAttack = False
+
+
+        if self.attack:
+            screen.blit(Attack[self.attackCount//3], (self.x,self.y))
+            self.attackCount += 1
+
+        if self.ultraAttack:
+            screen.blit(ultraAttack[self.ultraAttackCount//3], (self.x,self.y))
+            self.ultraAttackCount += 1
+
 
         if self.isJump:
                 screen.blit(Jump[self.walkCount//3], (self.x,self.y)) 
                 self.walkCount += 1
         elif not(self.standing): # если не стоим, значит двигаем
-            if self.left: # а если двигаемся например влево то внизу прогружаем анимацию движения влево
+            if self.left:
                 screen.blit(walkLeft[self.walkCount//3], (self.x,self.y)) 
-                self.walkCount += 1
-            elif self.right: # тоже самое, но вправо
+            elif self.right:
                 screen.blit(walkRight[self.walkCount//3], (self.x,self.y)) 
-                self.walkCount += 1
+            self.walkCount += 1
             
             
         else:
-            if self.right: # начинаем движение вправо с 7 индекса
+            if self.right:
                 screen.blit(walkRight[7], (self.x,self.y)) 
-            else: # начинаем движение влево с 7 индекса
+            else:
                 screen.blit(walkLeft[7], (self.x,self.y))
         self.hitbox = (self.x + 20, self.y, 28,60)
         pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)  # прорисовка хитбокса
@@ -124,23 +144,39 @@ while running:
     
     # Управление камерой
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and samurai.x > samurai.vel: 
-        samurai.x -= samurai.vel
-        samurai.left = True
-        samurai.right = False
+
+    if keys[pygame.K_z] and not samurai.ultraAttack:
+        samurai.ultraAttack = True
         samurai.standing = False
-        camera_offset += 3
-        world_shift -= 3
-    elif keys[pygame.K_RIGHT]:
-        samurai.x += samurai.vel
-        samurai.left = False
-        samurai.right = True
-        samurai.standing = False  
-        camera_offset -= 3
-        world_shift += 3
-    else: 
-        samurai.standing = True
-        samurai.walkCount = 0    
+        samurai.walkCount = 0
+        samurai.ultraAttackCount = 0
+    
+    if keys[pygame.K_SPACE] and not samurai.attack:
+        samurai.attack = True
+        samurai.standing = False
+        samurai.walkCount = 0
+        samurai.attackCount = 0
+    
+    # ДВИЖЕНИЕ - только если не атакуем
+    if not samurai.attack and not samurai.ultraAttack:  
+        if keys[pygame.K_LEFT] and samurai.x > samurai.vel: 
+            samurai.x -= samurai.vel
+            samurai.left = True
+            samurai.right = False
+            samurai.standing = False
+            camera_offset += 3
+            world_shift -= 3
+        elif keys[pygame.K_RIGHT] and samurai.x < 1920 - samurai.width - samurai.vel:
+            samurai.x += samurai.vel
+            samurai.left = False
+            samurai.right = True
+            samurai.standing = False  
+            camera_offset -= 3
+            world_shift += 3
+        else: 
+            if not samurai.attack:  # не сбрасываем в стояние если атакуем
+                samurai.standing = True
+                samurai.walkCount = 0   
 
 
     if not(samurai.isJump):
