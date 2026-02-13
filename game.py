@@ -113,6 +113,34 @@ class player(object):
 
 #############################################################################
 
+######################### Класс врага ###################################
+class enemy(object):
+    # загружаем анимацию врага влево или вправа
+    Ronin = [pygame.image.load('Pygame_Final/Enemy/Ronin.png')]
+
+
+    def __init__(self, x,y,width,height):
+        self.x = x # координаты врага по х
+        self.y = y # координаты врага по y
+        self.width = width # ширина персонажа
+        self.height = height # высота персонажа
+        self.spawned = False
+        self.walkCount = 0 # счётчик движения
+        self.vel = 3 # коэффициент движения
+        self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс врага
+        self.health = 10 # здоровье врага
+        self.visible = True # видимость врага
+
+    def draw(self, screen,world_shift):
+        screen_x = self.x - world_shift
+        screen.blit(self.Ronin[0], (screen_x, self.y))
+
+#############################################################################
+Ronin1 = enemy(2000,850, 70,70)
+enemis = [
+    Ronin1
+]
+
 # Создаем слои с правильными z_index (меньше - дальше, больше - ближе)
 layers = [
     ParallaxLayer("Pygame_Final/parallax/desert/desert_1.png", 0, 0.2, 2),     
@@ -133,6 +161,8 @@ world_shift = 0  # Глобальное смещение мира
 
 def redrawGameWindow(): # функция прорисовки персонажа и фона
 
+    for enemy in enemis:
+        enemy.draw(screen, world_shift)
     samurai.draw(screen) # прорисовка героя
     pygame.display.flip()
 
@@ -148,11 +178,15 @@ while running:
     if keys[pygame.K_z] and not samurai.ultraAttack:
         samurai.ultraAttack = True
         samurai.standing = False
+        samurai.left = False
+        samurai.right = False
         samurai.walkCount = 0
         samurai.ultraAttackCount = 0
     
     if keys[pygame.K_SPACE] and not samurai.attack:
         samurai.attack = True
+        samurai.left = False
+        samurai.right = False
         samurai.standing = False
         samurai.walkCount = 0
         samurai.attackCount = 0
@@ -166,13 +200,15 @@ while running:
             samurai.standing = False
             camera_offset += 3
             world_shift -= 3
-        elif keys[pygame.K_RIGHT] and samurai.x < 1920 - samurai.width - samurai.vel:
-            samurai.x += samurai.vel
-            samurai.left = False
-            samurai.right = True
-            samurai.standing = False  
-            camera_offset -= 3
-            world_shift += 3
+        elif keys[pygame.K_RIGHT]:
+            if samurai.x < 1200 - samurai.width - samurai.vel:
+                samurai.x += samurai.vel
+                samurai.left = False
+                samurai.right = True
+                samurai.standing = False 
+            else:     
+                camera_offset -= 3
+                world_shift += 3
         else: 
             if not samurai.attack:  # не сбрасываем в стояние если атакуем
                 samurai.standing = True
