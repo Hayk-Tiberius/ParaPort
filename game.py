@@ -69,7 +69,9 @@ class player(object):
         self.left = False # загрузка анимации влево
         self.right = False # загрузка анимации вправо
         self.walkCount = 0 # счётчик движения
+        self.health = 10 # здоровье героя
         self.standing = True # загрузка анимации стояния
+        self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс героя
 
     def draw(self,screen):
         if self.walkCount + 1 >= 24:
@@ -108,10 +110,36 @@ class player(object):
             else:
                 screen.blit(walkLeft[7], (self.x,self.y))
         self.hitbox = (self.x + 20, self.y, 28,60)
+        pygame.draw.rect(screen, (255,0,0), (self.hitbox[0], self.hitbox[1] - 20,50, 10 )) # прорисовываем хитбокс сперва красным
+        pygame.draw.rect(screen, (0,255,0), (self.hitbox[0], self.hitbox[1] - 20,50 - (5 * (10 - self.health)), 10 )) # затем накладываем зелёный, и при минус хп зёлый цвет сокращается и начинается виднется красный
+        self.hitbox = (self.x + 8, self.y, 28,28) 
         pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)  # прорисовка хитбокса
+    
+    def hit(self): # Функция которая проверяет попала ли пуля по герою или нет
+        if self.health > 0:
+            self.health -= 1
+        else:
+            self.visible = False
+        print("hit")
+        pass
 
 
 #############################################################################
+
+######################### Класс для пули #################################
+
+class projectile(object): 
+    def __init__(self,x,y,radius,color,facing):
+        self.x = x # координаты пули по х
+        self.y = y # координаты пули по y
+        self.radius = radius  # размер пули
+        self.color = color # цвет пули
+        self.facing = facing # поворот пули зависит от того куда персонаж смотрит (влево = -1, вправо = 1)
+        self.vel = 8 * facing # с какой скоростью летит пуля
+
+    def draw(self,screen, world_shift):
+        screen_x = self.x - world_shift
+        pygame.draw.circle(screen, self.color, (screen_x,self.y), self.radius)
 
 ######################### Класс врага ###################################
 class enemy(object):
@@ -130,15 +158,36 @@ class enemy(object):
         self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс врага
         self.health = 10 # здоровье врага
         self.visible = True # видимость врага
+        self.shootCooldown = 0
 
     def draw(self, screen,world_shift):
         screen_x = self.x - world_shift
         screen.blit(self.Ronin[0], (screen_x, self.y))
+        
+
+    def shoot(self, player, bullets):
+        if self.shootCooldown == 0:
+
+            if player.x > self.x - world_shift:
+                facing = 1
+            else:
+                facing = -1
+
+            bullet = projectile(self.x + 30, self.y + 30, 6, (255,0,0), facing)
+            bullets.append(bullet)
+
+            self.shootCooldown = 60
+
+        if self.shootCooldown > 0:
+            self.shootCooldown -= 1
 
 #############################################################################
 Ronin1 = enemy(2000,850, 70,70)
+Ronin2 = enemy(4000,850, 70,70)
+enemy_bullets = []
 enemis = [
-    Ronin1
+    Ronin1,
+    Ronin2
 ]
 
 # Создаем слои с правильными z_index (меньше - дальше, больше - ближе)
@@ -163,6 +212,11 @@ def redrawGameWindow(): # функция прорисовки персонажа
 
     for enemy in enemis:
         enemy.draw(screen, world_shift)
+    
+    for enemy in enemis:
+        enemy.shoot(samurai, enemy_bullets)
+    for bullet in enemy_bullets:
+        bullet.draw(screen, world_shift)
     samurai.draw(screen) # прорисовка героя
     pygame.display.flip()
 
@@ -226,7 +280,23 @@ while running:
         else: 
             samurai.jumpCount = 10
             samurai.isJump = False
+
+    for bullet in enemy_bullets[:]:
+        bullet.x += bullet.vel
+
+        screen_x = bullet.x - world_shift
+
+        if screen_x < -50 or screen_x > 1920 + 50:
+            enemy_bullets.remove(bullet)
     
+    for bullet in enemy_bullets:
+
+        if samurai.hitbox[0] < bullet.x < samurai.hitbox[0] + samurai.hitbox[2] and \
+        samurai.hitbox[1] < bullet.y < samurai.hitbox[1] + samurai.hitbox[3]:
+
+            samurai.hit()
+            enemy_bullets.remove(bullet)
+
     # Очистка экрана
     screen.fill((0, 0, 0))
     
