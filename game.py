@@ -156,13 +156,31 @@ class enemy(object):
         self.walkCount = 0 # счётчик движения
         self.vel = 3 # коэффициент движения
         self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс врага
-        self.health = 10 # здоровье врага
         self.visible = True # видимость врага
         self.shootCooldown = 0
+        self.health = 10 # здоровье врага
+        self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс врага
+        
 
     def draw(self, screen,world_shift):
         screen_x = self.x - world_shift
+
         screen.blit(self.Ronin[0], (screen_x, self.y))
+
+        self.hitbox = (screen_x + 20, self.y, 28, 60)
+
+        pygame.draw.rect(screen, (255,0,0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
+        pygame.draw.rect(screen, (0,255,0), (self.hitbox[0], self.hitbox[1] - 20, 50 - (5 * (10 - self.health)), 10))
+
+        pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)
+
+    def hit(self): # Функция которая проверяет попала ли пуля по герою или нет
+        if self.health > 0:
+            self.health -= 1
+        else:
+            self.visible = False
+        print("hit")
+        pass
         
 
     def shoot(self, player, bullets):
@@ -210,6 +228,7 @@ world_shift = 0  # Глобальное смещение мира
 
 def redrawGameWindow(): # функция прорисовки персонажа и фона
 
+
     for enemy in enemis:
         enemy.draw(screen, world_shift)
     
@@ -236,6 +255,15 @@ while running:
         samurai.right = False
         samurai.walkCount = 0
         samurai.ultraAttackCount = 0
+
+    if samurai.ultraAttack:
+        for enemy in enemis:
+            if samurai.hitbox[0] < enemy.hitbox[0] + enemy.hitbox[2] and \
+               samurai.hitbox[0] + samurai.hitbox[2] > enemy.hitbox[0] and \
+               samurai.hitbox[1] < enemy.hitbox[1] + enemy.hitbox[3] and \
+               samurai.hitbox[1] + samurai.hitbox[3] > enemy.hitbox[1]:
+
+                enemy.hit()
     
     if keys[pygame.K_SPACE] and not samurai.attack:
         samurai.attack = True
@@ -244,6 +272,16 @@ while running:
         samurai.standing = False
         samurai.walkCount = 0
         samurai.attackCount = 0
+
+    if samurai.attack:
+        for enemy in enemis:
+            if samurai.hitbox[0] < enemy.hitbox[0] + enemy.hitbox[2] and \
+               samurai.hitbox[0] + samurai.hitbox[2] > enemy.hitbox[0] and \
+               samurai.hitbox[1] < enemy.hitbox[1] + enemy.hitbox[3] and \
+               samurai.hitbox[1] + samurai.hitbox[3] > enemy.hitbox[1]:
+
+                enemy.hit()
+       
     
     # ДВИЖЕНИЕ - только если не атакуем
     if not samurai.attack and not samurai.ultraAttack:  
