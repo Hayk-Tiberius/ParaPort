@@ -72,6 +72,7 @@ class player(object):
         self.health = 10 # здоровье героя
         self.standing = True # загрузка анимации стояния
         self.hitbox = (self.x + 20, self.y, 28,60) # хитбокс героя
+        self.alive = True
 
     def draw(self,screen):
         if self.walkCount + 1 >= 24:
@@ -112,14 +113,14 @@ class player(object):
         self.hitbox = (self.x + 20, self.y, 28,60)
         pygame.draw.rect(screen, (255,0,0), (self.hitbox[0], self.hitbox[1] - 20,50, 10 )) # прорисовываем хитбокс сперва красным
         pygame.draw.rect(screen, (0,255,0), (self.hitbox[0], self.hitbox[1] - 20,50 - (5 * (10 - self.health)), 10 )) # затем накладываем зелёный, и при минус хп зёлый цвет сокращается и начинается виднется красный
-        self.hitbox = (self.x + 8, self.y, 28,28) 
+        self.hitbox = (self.x + 8, self.y, 69,69) 
         pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)  # прорисовка хитбокса
     
     def hit(self): # Функция которая проверяет попала ли пуля по герою или нет
         if self.health > 0:
             self.health -= 1
         else:
-            self.visible = False
+            self.alive = False
         print("hit")
         pass
 
@@ -174,13 +175,13 @@ class enemy(object):
 
         pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)
 
-    def hit(self): # Функция которая проверяет попала ли пуля по герою или нет
+    def hit(self,enemis): # Функция которая проверяет попала ли пуля по герою или нет
         if self.health > 0:
             self.health -= 1
         else:
+            if self in enemis:
+                enemis.remove(self)  # удаляем из списка
             self.visible = False
-        print("hit")
-        pass
         
 
     def shoot(self, player, bullets):
@@ -236,7 +237,10 @@ def redrawGameWindow(): # функция прорисовки персонажа
         enemy.shoot(samurai, enemy_bullets)
     for bullet in enemy_bullets:
         bullet.draw(screen, world_shift)
-    samurai.draw(screen) # прорисовка героя
+    if samurai.alive:
+        samurai.draw(screen) # прорисовка героя
+    else:
+        print("GG")
     pygame.display.flip()
 
 running = True
@@ -256,14 +260,16 @@ while running:
         samurai.walkCount = 0
         samurai.ultraAttackCount = 0
 
-    if samurai.ultraAttack:
+    if samurai.ultraAttack or samurai.attack:
         for enemy in enemis:
             if samurai.hitbox[0] < enemy.hitbox[0] + enemy.hitbox[2] and \
                samurai.hitbox[0] + samurai.hitbox[2] > enemy.hitbox[0] and \
                samurai.hitbox[1] < enemy.hitbox[1] + enemy.hitbox[3] and \
                samurai.hitbox[1] + samurai.hitbox[3] > enemy.hitbox[1]:
 
-                enemy.hit()
+                enemy.hit(enemis)
+            
+                
     
     if keys[pygame.K_SPACE] and not samurai.attack:
         samurai.attack = True
@@ -272,15 +278,6 @@ while running:
         samurai.standing = False
         samurai.walkCount = 0
         samurai.attackCount = 0
-
-    if samurai.attack:
-        for enemy in enemis:
-            if samurai.hitbox[0] < enemy.hitbox[0] + enemy.hitbox[2] and \
-               samurai.hitbox[0] + samurai.hitbox[2] > enemy.hitbox[0] and \
-               samurai.hitbox[1] < enemy.hitbox[1] + enemy.hitbox[3] and \
-               samurai.hitbox[1] + samurai.hitbox[3] > enemy.hitbox[1]:
-
-                enemy.hit()
        
     
     # ДВИЖЕНИЕ - только если не атакуем
