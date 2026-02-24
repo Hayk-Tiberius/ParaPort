@@ -16,7 +16,17 @@ heroAttack = [pygame.image.load('main_hero/hero_attack1.png'),pygame.image.load(
 bg = pygame.image.load('main_hero/background.png')
 stand = pygame.image.load('main_hero/hero_stand.png')
 
+bulletSound = pygame.mixer.Sound('music/bullet.wav')
+hitSound = pygame.mixer.Sound("music/hit.wav")
+victorySound = pygame.mixer.Sound("music/victory.wav")
+
+music = pygame.mixer.music.load("music/main_theme.mp3")
+pygame.mixer.music.play(-1)
+
+
 ###############################################################################
+
+score = 0
 
 #################### Создание класса персонажа ################################
 
@@ -34,12 +44,11 @@ class player(object):
         self.right = False
         self.walkCount = 0
         self.standing = True
+        self.hitbox = (self.x + 20, self.y, 28,60)
 
     def draw(self,windows):
         if self.walkCount + 1 >= 21: # 8 типов движения влево/вправо * 3 фрейма = 24
             self.walkCount = 0 
-
-            
 
         if not(self.standing):    
             if self.left:
@@ -53,8 +62,11 @@ class player(object):
             if self.right:
                 windows.blit(walkRight[7], (self.x,self.y)) 
             else:
-                windows.blit(walkLeft[7], (self.x,self.y)) 
+                windows.blit(walkLeft[7], (self.x,self.y))
+        self.hitbox = (self.x + 20, self.y, 28,60)
+        pygame.draw.rect(windows, (255,0,0), self.hitbox, 2) 
 
+    
 
 ######################### Класс для пули #################################
 
@@ -85,18 +97,29 @@ class enemy(object):
         self.path = [self.x, self.end]
         self.walkCount = 0
         self.vel = 3
+        self.hitbox = (self.x + 20, self.y, 28,60)
+        self.health = 10
+        self.visible = True
 
     def draw(self, windows):
         self.move()
-        if self.walkCount + 1 >= 33:
-            self.walkCount = 0
+        if self.visible:
+            if self.walkCount + 1 >= 33:
+                self.walkCount = 0
 
-        if self.vel > 0:
-            windows.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
-            self.walkCount += 1
-        else:
-            windows.blit(self.walkLeft[self.walkCount//3], (self.x,self.y))
-            self.walkCount += 1
+            if self.vel > 0:
+                windows.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
+                self.walkCount += 1
+            else:
+                windows.blit(self.walkLeft[self.walkCount//3], (self.x,self.y))
+                self.walkCount += 1
+        
+            pygame.draw.rect(windows, (255,0,0), (self.hitbox[0], self.hitbox[1] - 20,50, 10 ))
+            pygame.draw.rect(windows, (0,255,0), (self.hitbox[0], self.hitbox[1] - 20,50 - (5 * (10 - self.health)), 10 ))
+            self.hitbox = (self.x + 20, self.y, 28,60)
+            pygame.draw.rect(windows, (255,0,0), self.hitbox, 2)
+           
+       
 
     def move(self):
         if self.vel > 0:
@@ -111,19 +134,33 @@ class enemy(object):
             else:
                 self.vel = self.vel * -1
                 self.walkCount = 0
+    def hit(self):
+        if self.health > 0:
+            self.health -= 1
+        else:
+            self.visible = False
+        print("hit")
+        pass
 
-
-
+font = pygame.font.SysFont('comicsans', 30, True)
 elf_woman = player(200,850,70,70)
 goblin = enemy(200,850, 64, 64, 450)
+goblin2 = enemy(400,850, 64, 64, 650)
+goblin3 = enemy(600,850, 64, 64, 850)
+shootLoop = 0
 bullets = []
 
 
 def redrawGameWindow():
 
     windows.blit(bg, (0,0))
+    text = font.render('Score' + str(score), 1, (255,255,255))
+    windows.blit(text, (1400, 10))
     elf_woman.draw(windows)
+    
     goblin.draw(windows)
+    goblin2.draw(windows)
+    goblin3.draw(windows)
     for bullet in bullets:
         bullet.draw(windows)
     pygame.display.flip()  # Полное обновление экрана
@@ -133,11 +170,55 @@ def redrawGameWindow():
 while running: # Пока не нажали кнопку quit программа будет работать
     clock.tick(24)
 
+   
+
+
+    if shootLoop > 0:
+        shootLoop += 1
+    if shootLoop > 3:
+        shootLoop = 0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
     for bullet in bullets:
+        if bullet.y - bullet.radius< goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
+            if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+                hitSound.play()
+                goblin.hit()
+                score += 1
+                bullets.pop(bullets.index(bullet))
+        
+
+        if bullet.x < 1536 and bullet.x > 0:
+            bullet.x += bullet.vel
+        else:
+            bullets.pop(bullets.index(bullet))
+
+    for bullet in bullets:
+        if bullet.y - bullet.radius< goblin2.hitbox[1] + goblin2.hitbox[3] and bullet.y + bullet.radius > goblin2.hitbox[1]:
+            if bullet.x + bullet.radius > goblin2.hitbox[0] and bullet.x - bullet.radius < goblin2.hitbox[0] + goblin2.hitbox[2]:
+                hitSound.play()
+                goblin2.hit()
+                score += 1
+                bullets.pop(bullets.index(bullet))
+        
+
+        if bullet.x < 1536 and bullet.x > 0:
+            bullet.x += bullet.vel
+        else:
+            bullets.pop(bullets.index(bullet))
+
+    for bullet in bullets:
+        if bullet.y - bullet.radius< goblin3.hitbox[1] + goblin3.hitbox[3] and bullet.y + bullet.radius > goblin3.hitbox[1]:
+            if bullet.x + bullet.radius > goblin3.hitbox[0] and bullet.x - bullet.radius < goblin3.hitbox[0] + goblin3.hitbox[2]:
+                hitSound.play()
+                goblin3.hit()
+                score += 1
+                bullets.pop(bullets.index(bullet))
+        
+
         if bullet.x < 1536 and bullet.x > 0:
             bullet.x += bullet.vel
         else:
@@ -145,7 +226,8 @@ while running: # Пока не нажали кнопку quit программа
 
     keys = pygame.key.get_pressed()
     
-    if keys[pygame.K_SPACE]:
+    if keys[pygame.K_SPACE] and shootLoop == 0:
+        bulletSound.play()
         elf_woman.attack = True
         if elf_woman.left:    
                 facing = -1
@@ -153,8 +235,9 @@ while running: # Пока не нажали кнопку quit программа
                 facing = 1
         if len(bullets) < 5:
             
-            bullets.append(projectile(round(elf_woman.x+elf_woman.width//2), round(elf_woman.y+elf_woman.height//2), 6, (0,0,0), facing))
-
+           bullets.append(projectile(round(elf_woman.x+elf_woman.width//2), round(elf_woman.y+elf_woman.height//2), 6, (0,0,0), facing))
+        
+        shootLoop = 1
 
     if keys[pygame.K_LEFT] and elf_woman.x > elf_woman.vel: 
         elf_woman.x -= elf_woman.vel
