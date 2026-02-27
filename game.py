@@ -200,10 +200,48 @@ class enemy(object):
         if self.shootCooldown > 0:
             self.shootCooldown -= 1
 
+######################### Класс npc #########################################
+
+class npc(object):
+
+
+    def __init__(self, x,y,width,height,text,image_path):
+        self.x = x # координаты врага по х
+        self.y = y # координаты врага по y
+        self.width = width # ширина персонажа
+        self.height = height # высота персонажа
+        self.hitbox = (x, y, width, height)
+        self.text = text
+        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (width, height))
+
+    def draw(self, screen,world_shift):
+        screen_x = self.x - world_shift
+
+        screen.blit(self.image, (screen_x, self.y))
+        self.hitbox = (screen_x + 20, self.y, 28, 60)
+
+        pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)
+
+    def interact(self, player):
+        px, py, pw, ph = player.hitbox
+        nx, ny, nw, nh = self.hitbox
+        if px < nx + nw and px + pw > nx and py < ny + nh and py + ph > ny:
+            font = pygame.font.SysFont('Arial', 24)
+            text_surface = font.render(self.text, True, (255, 255, 0))
+            screen.blit(text_surface, (nx - world_shift, ny - 30))
+
 #############################################################################
 Ronin1 = enemy(2000,850, 70,70)
 Ronin2 = enemy(4000,850, 70,70)
 enemy_bullets = []
+
+npc1 = npc(1000,850, 70,70, "Привет", "Pygame_Final/other_img/npc_hayk.png")
+
+npcs = [
+    npc1
+]
+
 enemis = [
     Ronin1,
     Ronin2
@@ -232,6 +270,10 @@ def redrawGameWindow(): # функция прорисовки персонажа
 
     for enemy in enemis:
         enemy.draw(screen, world_shift)
+
+    for i in npcs:
+        i.draw(screen, world_shift)
+        i.interact(samurai)
     
     for enemy in enemis:
         enemy.shoot(samurai, enemy_bullets)
