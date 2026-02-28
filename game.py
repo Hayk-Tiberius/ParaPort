@@ -128,19 +128,24 @@ class player(object):
 #############################################################################
 
 ######################### Класс для пули #################################
-
+shuriken_img = pygame.image.load('Pygame_Final/Enemy/suriken.png').convert_alpha()
 class projectile(object): 
+   
+
     def __init__(self,x,y,radius,color,facing):
         self.x = x # координаты пули по х
         self.y = y # координаты пули по y
         self.radius = radius  # размер пули
         self.color = color # цвет пули
+        self.image = shuriken_img
         self.facing = facing # поворот пули зависит от того куда персонаж смотрит (влево = -1, вправо = 1)
         self.vel = 8 * facing # с какой скоростью летит пуля
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
 
     def draw(self,screen, world_shift):
         screen_x = self.x - world_shift
-        pygame.draw.circle(screen, self.color, (screen_x,self.y), self.radius)
+        screen.blit(self.image, (screen_x - self.width//2, self.y - self.height//2))
 
 ######################### Класс врага ###################################
 class enemy(object):
@@ -205,7 +210,7 @@ class enemy(object):
 class npc(object):
 
 
-    def __init__(self, x,y,width,height,text,image_path):
+    def __init__(self, x,y,width,height,text,image_path, dialog_image_path, face_image_path):
         self.x = x # координаты врага по х
         self.y = y # координаты врага по y
         self.width = width # ширина персонажа
@@ -215,11 +220,49 @@ class npc(object):
         self.image = pygame.image.load(image_path).convert_alpha()
         self.image = pygame.transform.scale(self.image, (width, height))
 
+        self.dialog_image = pygame.image.load(dialog_image_path).convert_alpha()
+        self.dialog_image = pygame.transform.scale(self.dialog_image, (400, 100))  # размер окна
+
+        self.face_image = pygame.image.load(face_image_path).convert_alpha()
+        self.face_image = pygame.transform.scale(self.face_image, (100, 100))
+
+        self.show_dialog = False 
+
     def draw(self, screen,world_shift):
         screen_x = self.x - world_shift
-
         screen.blit(self.image, (screen_x, self.y))
         self.hitbox = (screen_x + 20, self.y, 28, 60)
+
+        if self.show_dialog:
+            # Рисуем диалоговое окно над NPC
+            dialog_x = screen_x
+            dialog_y = self.y - 120
+            screen.blit(self.dialog_image, (dialog_x, dialog_y))
+
+            face_x = screen_x - 100
+            face_y = self.y - 120
+            screen.blit(self.face_image, (face_x, face_y))
+            
+            # Рисуем текст внутри окна
+            font = pygame.font.SysFont('Arial', 20)
+            # Разбиваем текст на строки, чтобы помещался в окно
+            words = self.text.split(' ')
+            lines = []
+            line = ''
+            for word in words:
+                if font.size(line + ' ' + word)[0] > 380:  # чуть меньше ширины окна
+                    lines.append(line)
+                    line = word
+                else:
+                    if line == '':
+                        line = word
+                    else:
+                        line += ' ' + word
+            lines.append(line)
+
+            for i, l in enumerate(lines):
+                text_surface = font.render(l, True, (255, 255, 255))
+                screen.blit(text_surface, (dialog_x + 20, dialog_y + 24 + i*25))
 
         pygame.draw.rect(screen, (255,0,0), self.hitbox, 2)
 
@@ -227,19 +270,22 @@ class npc(object):
         px, py, pw, ph = player.hitbox
         nx, ny, nw, nh = self.hitbox
         if px < nx + nw and px + pw > nx and py < ny + nh and py + ph > ny:
-            font = pygame.font.SysFont('Arial', 24)
-            text_surface = font.render(self.text, True, (255, 255, 0))
-            screen.blit(text_surface, (nx - world_shift, ny - 30))
+            if keys[pygame.K_e]:
+                self.show_dialog = True
+        else:
+            self.show_dialog = False
 
 #############################################################################
 Ronin1 = enemy(2000,850, 70,70)
 Ronin2 = enemy(4000,850, 70,70)
 enemy_bullets = []
 
-npc1 = npc(1000,850, 70,70, "Привет", "Pygame_Final/other_img/npc_hayk.png")
+npc1 = npc(1000,800, 70,70, "Мне столько не платят в Гермесе, пора увольняться", "Pygame_Final/other_img/npc_hayk.png","Pygame_Final/other_img/dialogue_window.png", "Pygame_Final/other_img/npc_hayk_face.png")
+npc2 = npc(1500,800, 70,70, "Если ты думал, что игра про спасение принцессы, то я сама за себя постою.Идиот!", "Pygame_Final/other_img/npc_princess.png","Pygame_Final/other_img/dialogue_window.png", "Pygame_Final/other_img/npc_princess_face.png")
 
 npcs = [
-    npc1
+    npc1,
+    npc2
 ]
 
 enemis = [
